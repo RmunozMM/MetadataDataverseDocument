@@ -5,7 +5,7 @@ Microsoft Dataverse / Dynamics 365: diccionario de datos técnico en Excel, diag
 Mermaid y matrices de relaciones en Excel/HTML.
 
 - **Autor:** Rogelio Muñoz — [www.rogeliomunoz.cl](http://www.rogeliomunoz.cl)
-- **Versión actual:** 2.1.9.0
+- **Versión actual:** 2.1.10.0
 - **Plataforma:** .NET Framework 4.8, WinForms
 - **Todos los derechos reservados.** El código está publicado para consulta y para descargar el
   instalador; no se autoriza su reutilización ni redistribución sin permiso del autor.
@@ -100,7 +100,7 @@ Resources/                        Iconos del plugin
 
 ## Trampas ya pagadas (leer antes de tocar el exportador)
 
-Cuatro defectos reales que costaron varias versiones de encontrar. Están documentados aquí para
+Cinco defectos reales que costaron varias versiones de encontrar. Están documentados aquí para
 no repetirlos.
 
 **1. `worker.ReportProgress` lanza excepción si el `WorkAsyncInfo` no declara `ProgressChanged`.**
@@ -125,6 +125,25 @@ estilos con nombre `LinkCell` / `LinkCellZebra`.
 Truncar al inicio colapsa familias enteras de tablas (`wit_<x>_wit_<y>`) en nombres casi
 idénticos, y `Worksheets.Add` **lanza excepción** ante un duplicado. Se conservan los dos
 extremos del nombre lógico (20 primeros + `~` + 10 últimos) y se resuelve unicidad con sufijo.
+
+**5. `AppDomain.CurrentDomain.AssemblyResolve` es de TODO el proceso, no del plugin.**
+El handler estaba enganchado en el constructor de `Plugin` y nunca se quitaba, así que cada
+instanciación agregaba otro, y todos ellos interceptaban las resoluciones de assembly de **los
+demás plugins** cargados en XrmToolBox. Si se responde a una petición ajena con nuestra copia de
+una librería compartida (EPPlus, `Microsoft.Xrm.Sdk`, `System.Resources.Extensions`), ese plugin
+recibe una versión distinta de la que espera y muere con `FileLoadException` /
+`TypeLoadException` / `MissingMethodException`. Reglas que ahora cumple el handler: se registra
+una sola vez por proceso; ignora las peticiones cuyo `RequestingAssembly` no sea el propio; solo
+atiende dependencias que este assembly declara; busca **únicamente** en su propia subcarpeta y
+nunca en la raíz de `Plugins`; jamás devuelve una versión anterior a la solicitada; y traga
+cualquier excepción, porque una excepción lanzada desde este handler se propaga a quien disparó
+la carga, que puede ser un plugin ajeno.
+
+Agravante que lo mantuvo oculto: la ruta se componía como `"$argName.dll"` — interpolación de
+PowerShell dentro de un literal de C# —, así que buscaba un archivo llamado literalmente
+`$argName.dll` y nunca encontraba nada. Para compensar, el instalador copiaba las dependencias a
+la **raíz** de `Plugins`, que es exactamente lo que las vuelve visibles para todos los plugins.
+Los dos defectos se sostenían mutuamente.
 
 ---
 

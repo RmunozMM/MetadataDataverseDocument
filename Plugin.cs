@@ -4,6 +4,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using XrmToolBox.Extensibility;
 using XrmToolBox.Extensibility.Interfaces;
 using MetadataDataverseDocument.UI;
@@ -21,9 +22,19 @@ namespace MetadataDataverseDocument
         ExportMetadata("SecondaryFontColor", "Gray")]
     public class Plugin : PluginBase
     {
+        // AppDomain.CurrentDomain.AssemblyResolve es un evento de TODO EL PROCESO, no del
+        // plugin. XrmToolBox puede instanciar esta clase mas de una vez, y antes cada
+        // instancia agregaba OTRO handler que nunca se quitaba: el resultado eran varios
+        // handlers nuestros interceptando las resoluciones de assembly de todos los demas
+        // plugins cargados. Se registra una sola vez por proceso.
+        private static int _resolverRegistered;
+
         public Plugin()
         {
-            AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
+            if (Interlocked.Exchange(ref _resolverRegistered, 1) == 0)
+            {
+                AppDomain.CurrentDomain.AssemblyResolve += AssemblyResolveEventHandler;
+            }
         }
 
         public override IXrmToolBoxPluginControl GetControl()
@@ -31,36 +42,81 @@ namespace MetadataDataverseDocument
             return new MetadataDocumentControl();
         }
 
-        private Assembly AssemblyResolveEventHandler(object sender, ResolveEventArgs args)
+        /// <summary>
+        /// Resuelve UNICAMENTE las dependencias de este plugin, y solo desde su propia
+        /// subcarpeta.
+        ///
+        /// Por que importa tanto: este handler se llama para cada assembly que el runtime no
+        /// logra resolver en TODO el proceso de XrmToolBox, incluidas las peticiones de otros
+        /// plugins. Si respondemos a una peticion ajena con NUESTRA copia de una libreria
+        /// compartida (EPPlus, Microsoft.Xrm.Sdk, System.Resources.Extensions...), ese otro
+        /// plugin recibe una version distinta de la que espera y falla con
+        /// FileLoadException / TypeLoadException / MissingMethodException.
+        ///
+        /// La version anterior de este metodo componia la ruta con "$argName.dll" -
+        /// interpolacion de PowerShell dentro de un literal de C#-, asi que buscaba un archivo
+        /// llamado literalmente "$argName.dll" y nunca encontraba nada. Eso obligaba a copiar
+        /// las dependencias a la RAIZ de la carpeta Plugins para que el runtime las hallara por
+        /// sondeo normal, y es justamente esa copia en la raiz la que queda visible para todos
+        /// los demas plugins. Al arreglar la ruta, las dependencias vuelven a la subcarpeta y
+        /// dejan de interferir.
+        /// </summary>
+        private static Assembly AssemblyResolveEventHandler(object sender, ResolveEventArgs args)
         {
-            Assembly loadAssembly = null;
-            Assembly currAssembly = Assembly.GetExecutingAssembly();
-            var argName = args.Name.Contains(",") ? args.Name.Substring(0, args.Name.IndexOf(",")) : args.Name;
-
-            List<AssemblyName> refAssemblies = currAssembly.GetReferencedAssemblies().ToList();
-            var refAssembly = refAssemblies.FirstOrDefault(a => a.Name == argName);
-
-            if (refAssembly != null)
+            try
             {
-                string dir = Path.GetDirectoryName(currAssembly.Location);
-                string folder = Path.GetFileNameWithoutExtension(currAssembly.Location);
-                
-                // Try subfolder
-                string subPath = Path.Combine(dir, folder, "$argName.dll");
-                if (File.Exists(subPath))
+                var thisAssembly = typeof(Plugin).Assembly;
+
+                // Si sabemos quien pide y no somos nosotros, no es asunto nuestro.
+                if (args.RequestingAssembly != null && args.RequestingAssembly != thisAssembly)
                 {
-                    return Assembly.LoadFrom(subPath);
+                    return null;
                 }
 
-                // Try same folder
-                string samePath = Path.Combine(dir, "$argName.dll");
-                if (File.Exists(samePath))
+                var requested = new AssemblyName(args.Name);
+
+                // Solo dependencias que este assembly realmente declara.
+                bool isOwnDependency = thisAssembly
+                    .GetReferencedAssemblies()
+                    .Any(a => string.Equals(a.Name, requested.Name, StringComparison.OrdinalIgnoreCase));
+                if (!isOwnDependency)
                 {
-                    return Assembly.LoadFrom(samePath);
+                    return null;
                 }
+
+                // Nuestras dependencias viven en Plugins\<NombreDelAssembly>\ y en ningun otro
+                // lado. Deliberadamente NO se busca en la raiz de Plugins: lo que hay ahi es
+                // territorio compartido con el resto de los plugins.
+                string pluginsDir = Path.GetDirectoryName(thisAssembly.Location);
+                string ownFolder = Path.GetFileNameWithoutExtension(thisAssembly.Location);
+                string candidate = Path.Combine(pluginsDir, ownFolder, requested.Name + ".dll");
+
+                if (!File.Exists(candidate))
+                {
+                    return null;
+                }
+
+                // Nunca devolver una version mas antigua que la solicitada: si alguien pide una
+                // version mayor de una libreria compartida, dejamos que el runtime siga buscando
+                // en vez de entregarle la nuestra y romperlo.
+                if (requested.Version != null)
+                {
+                    var candidateName = AssemblyName.GetAssemblyName(candidate);
+                    if (candidateName.Version != null && candidateName.Version < requested.Version)
+                    {
+                        return null;
+                    }
+                }
+
+                return Assembly.LoadFrom(candidate);
             }
-
-            return loadAssembly;
+            catch
+            {
+                // Una excepcion lanzada desde un handler de AssemblyResolve se propaga a quien
+                // haya disparado la carga, que puede ser un plugin ajeno. Fallar en silencio y
+                // dejar que el runtime continue con su propio sondeo.
+                return null;
+            }
         }
     }
 }

@@ -3,6 +3,31 @@
 Todas las versiones desde la 2.1.0. Las causas raíz están anotadas porque varias fueron
 difíciles de encontrar y conviene no volver a investigarlas.
 
+## 2.1.10.0 — Aislamiento de dependencias
+
+Corrige que este plugin provocara fallos en **otros** plugins de XrmToolBox.
+
+- **Causa raíz:** el handler `AssemblyResolve` se registraba en el constructor de `Plugin` y
+  nunca se quitaba. Ese evento es de todo el proceso, así que nuestros handlers interceptaban
+  las resoluciones de assembly de todos los demás plugins cargados, con riesgo de entregarles
+  nuestra versión de una librería compartida y romperlos.
+- El handler ahora: se registra una sola vez por proceso; ignora peticiones cuyo
+  `RequestingAssembly` no sea el propio; solo atiende dependencias declaradas por este
+  assembly; busca únicamente en su propia subcarpeta; nunca devuelve una versión anterior a la
+  pedida; y no propaga excepciones.
+- **Corregido `"$argName.dll"`**: interpolación de PowerShell dentro de un literal de C#. El
+  handler buscaba un archivo con ese nombre literal y nunca resolvía nada, lo que obligaba a
+  copiar las dependencias a la raíz de `Plugins` como parche.
+- **El instalador ya no copia dependencias a la raíz de `Plugins`**, solo a la subcarpeta del
+  plugin. Además detecta copias sueltas dejadas por instalaciones anteriores y ofrece
+  eliminarlas.
+- `AssemblyVersion` / `AssemblyFileVersion` estaban congeladas en 2.1.0.0 mientras el diálogo
+  "Acerca de" avanzaba solo; ahora se mantienen sincronizadas.
+- Verificado por ejecución en un layout de carpetas idéntico al de XrmToolBox: no responde a
+  peticiones de otros assemblies, no entrega EPPlus 4.5.3.3 a quien pide EPPlus 7, no responde
+  por librerías ajenas, resuelve su propia dependencia desde la subcarpeta, y no lanza
+  excepción ante un nombre de assembly corrupto.
+
 ## 2.1.9.0 — Buscador de tablas
 
 - Búsqueda **multi-término**: acepta varios nombres separados por espacio, coma, punto y coma,
