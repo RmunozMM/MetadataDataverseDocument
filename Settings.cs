@@ -20,6 +20,12 @@ namespace MetadataDataverseDocument
         // running out of memory.
         public bool CombineIntoSingleFile { get; set; } = true;
 
+        // Ancho en pixeles del panel izquierdo (lista de tablas). Se guarda cada vez que el
+        // usuario mueve el separador, para que su ajuste sobreviva al cierre del plugin.
+        // 380 es el valor por defecto: alcanza para los cuatro botones de filtro en una fila
+        // y para leer los nombres de tabla sin que se corten.
+        public int LeftPanelWidth { get; set; } = 380;
+
         public string LastExportFolder { get; set; }
     }
 }

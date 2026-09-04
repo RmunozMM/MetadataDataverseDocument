@@ -5,7 +5,7 @@ Microsoft Dataverse / Dynamics 365: diccionario de datos técnico en Excel, diag
 Mermaid y matrices de relaciones en Excel/HTML.
 
 - **Autor:** Rogelio Muñoz — [www.rogeliomunoz.cl](http://www.rogeliomunoz.cl)
-- **Versión actual:** 2.1.12.0
+- **Versión actual:** 2.1.13.0
 - **Plataforma:** .NET Framework 4.8, WinForms
 - **Todos los derechos reservados.** El código está publicado para consulta y para descargar el
   instalador; no se autoriza su reutilización ni redistribución sin permiso del autor.

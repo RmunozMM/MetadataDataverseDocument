@@ -62,6 +62,16 @@ namespace MetadataDataverseDocument.UI
         private CheckBox _chkGenerateIndexSheet;
         private CheckBox _chkCombineIntoSingleFile;
 
+        // El .designer asigna SplitterDistance = 300 en el constructor, cuando el control aun
+        // no tiene su ancho definitivo. WinForms RECORTA ese valor al espacio disponible en ese
+        // momento (el panel quedaba en ~120 px) y nunca lo recupera. Hay que aplicarlo cuando el
+        // control ya fue dimensionado; este flag evita reaplicarlo despues y pisar el ajuste
+        // manual del usuario.
+        private bool _splitterAplicado;
+        private const int DefaultLeftPanelWidth = 380;
+        private const int MinLeftPanelWidth = 300;   // los 4 botones de filtro en una fila
+        private const int MinRightPanelWidth = 320;
+
         // Shared Font for the header buttons, built once and reused on every call to
         // BuildModernHeaderButtons (which can run more than once - see constructor and
         // MetadataDocumentControl_Load) instead of allocating a new IDisposable Font per button
@@ -75,6 +85,8 @@ namespace MetadataDataverseDocument.UI
             BuildModernHeaderButtons();
             BuildExportOptionsPanel();
             BuildTableSearchEnhancements();
+            ConectarPersistenciaDelSeparador();
+            AplicarAnchoPanelIzquierdo();
             UpdateSelectionStats();
         }
 
@@ -92,7 +104,59 @@ namespace MetadataDataverseDocument.UI
             {
                 BuildTableSearchEnhancements();
             }
+            AplicarAnchoPanelIzquierdo();
             UpdateSelectionStats();
+        }
+
+        /// <summary>
+        /// Aplica el ancho guardado del panel izquierdo, una sola vez y solo cuando el
+        /// SplitContainer ya tiene un ancho real. Llamado desde Load y desde SizeChanged porque
+        /// XrmToolBox crea el control antes de darle su tamaño definitivo.
+        /// </summary>
+        private void AplicarAnchoPanelIzquierdo()
+        {
+            if (_splitterAplicado || splitContainerMain == null) return;
+
+            int disponible = splitContainerMain.Width;
+            if (disponible < MinLeftPanelWidth + MinRightPanelWidth + splitContainerMain.SplitterWidth)
+            {
+                return;   // todavia no hay espacio real: reintentar en el proximo SizeChanged
+            }
+
+            splitContainerMain.Panel1MinSize = MinLeftPanelWidth;
+            splitContainerMain.Panel2MinSize = MinRightPanelWidth;
+
+            int deseado = _settings.LeftPanelWidth > 0 ? _settings.LeftPanelWidth : DefaultLeftPanelWidth;
+            int maximo = disponible - MinRightPanelWidth - splitContainerMain.SplitterWidth;
+            int valor = Math.Max(MinLeftPanelWidth, Math.Min(deseado, maximo));
+
+            try
+            {
+                splitContainerMain.SplitterDistance = valor;
+                _splitterAplicado = true;
+            }
+            catch (InvalidOperationException)
+            {
+                // El contenedor cambio de tamaño mientras asignabamos: se reintenta luego.
+            }
+        }
+
+        /// <summary>
+        /// Guarda la posicion del separador cuando el usuario termina de arrastrarlo, para que
+        /// su ajuste se conserve entre sesiones. SplitterMoved se dispara al soltar, no durante
+        /// el arrastre, asi que no genera escrituras excesivas.
+        /// </summary>
+        private void ConectarPersistenciaDelSeparador()
+        {
+            if (splitContainerMain == null) return;
+
+            splitContainerMain.SizeChanged += (s, e) => AplicarAnchoPanelIzquierdo();
+            splitContainerMain.SplitterMoved += (s, e) =>
+            {
+                if (!_splitterAplicado) return;   // movimientos automaticos previos al ajuste
+                _settings.LeftPanelWidth = splitContainerMain.SplitterDistance;
+                SaveSettings();
+            };
         }
 
         private void LoadSettings()
@@ -1441,7 +1505,7 @@ namespace MetadataDataverseDocument.UI
 
                 var lblVersion = new WinLabel
                 {
-                    Text = "Version 2.1.12.0 | Ajuste de layout",
+                    Text = "Version 2.1.13.0 | Panel izquierdo ajustable",
                     Font = new Font("Segoe UI", 9F),
                     ForeColor = Color.FromArgb(148, 163, 184),
                     AutoSize = true,

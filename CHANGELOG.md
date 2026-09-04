@@ -3,6 +3,21 @@
 Todas las versiones desde la 2.1.0. Las causas raíz están anotadas porque varias fueron
 difíciles de encontrar y conviene no volver a investigarlas.
 
+## 2.1.13.0 — Panel izquierdo ajustable y con memoria
+
+- **Corregido:** el panel izquierdo se mostraba con ~120 px en vez de los 300 previstos, con
+  solo el botón "All" visible y los nombres de tabla cortados. `SplitterDistance` se asignaba
+  en el constructor del `.designer`, cuando XrmToolBox todavía no ha dimensionado el control:
+  WinForms **recorta** ese valor al espacio disponible en ese instante y no lo restaura. Ahora
+  se aplica una sola vez, cuando el `SplitContainer` ya tiene ancho real (desde `Load` y
+  `SizeChanged`), con `Panel1MinSize`/`Panel2MinSize` definidos.
+- **Nuevo:** ancho por defecto de 380 px, y el plugin **recuerda** dónde el usuario deja el
+  separador (`Settings.LeftPanelWidth`, guardado en `SplitterMoved`, que se dispara al soltar).
+  Al restaurar se acota al espacio disponible, así que nunca deja un panel inusable.
+
+> Trampa de WinForms para recordar: asignar `SplitterDistance` antes de que el control tenga su
+> tamaño final no falla ni avisa — simplemente queda recortado.
+
 ## 2.1.12.0 — Ajuste de layout del panel izquierdo
 
 - Corregido: al agregar el filtro **"Selected"** en la 2.1.9, los cuatro botones de filtro
