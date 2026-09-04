@@ -1477,7 +1477,7 @@ namespace MetadataDataverseDocument.UI
             using (var aboutForm = new Form
             {
                 Text = "About Metadata Dataverse Document",
-                Size = new Size(540, 360),
+                Size = new Size(560, 400),
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 MaximizeBox = false,
@@ -1505,7 +1505,7 @@ namespace MetadataDataverseDocument.UI
 
                 var lblVersion = new WinLabel
                 {
-                    Text = "Version 2.1.13.0 | Panel izquierdo ajustable",
+                    Text = "Version 2.1.14.0 | Enlace al repositorio",
                     Font = new Font("Segoe UI", 9F),
                     ForeColor = Color.FromArgb(148, 163, 184),
                     AutoSize = true,
@@ -1553,12 +1553,20 @@ namespace MetadataDataverseDocument.UI
                 };
                 linkEmail.LinkClicked += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("mailto:rmunoz1612@gmail.com") { UseShellExecute = true });
 
+                var linkRepo = new LinkLabel
+                {
+                    Text = "Repositorio: github.com/RmunozMM/MetadataDataverseDocument",
+                    AutoSize = true,
+                    Location = new Point(25, 250)
+                };
+                linkRepo.LinkClicked += (s, e) => System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://github.com/RmunozMM/MetadataDataverseDocument") { UseShellExecute = true });
+
                 var btnClose = new Button
                 {
                     Text = "Cerrar",
                     DialogResult = DialogResult.OK,
                     Size = new Size(85, 30),
-                    Location = new Point(410, 275),
+                    Location = new Point(430, 305),
                     BackColor = Color.FromArgb(30, 41, 59),
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat
@@ -1566,6 +1574,7 @@ namespace MetadataDataverseDocument.UI
                 btnClose.FlatAppearance.BorderSize = 0;
 
                 aboutForm.Controls.Add(btnClose);
+                aboutForm.Controls.Add(linkRepo);
                 aboutForm.Controls.Add(linkEmail);
                 aboutForm.Controls.Add(linkWeb);
                 aboutForm.Controls.Add(lblDev);

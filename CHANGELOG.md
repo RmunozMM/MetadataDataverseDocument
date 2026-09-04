@@ -3,6 +3,12 @@
 Todas las versiones desde la 2.1.0. Las causas raíz están anotadas porque varias fueron
 difíciles de encontrar y conviene no volver a investigarlas.
 
+## 2.1.14.0 — Enlace al repositorio
+
+- El diálogo "Acerca de" suma un tercer enlace, al repositorio del proyecto en GitHub. El
+  formulario pasó de 540x360 a 560x400 y el botón *Cerrar* bajó de y=275 a y=305, para que el
+  enlace nuevo (y=250) no quede debajo del botón.
+
 ## 2.1.13.0 — Panel izquierdo ajustable y con memoria
 
 - **Corregido:** el panel izquierdo se mostraba con ~120 px en vez de los 300 previstos, con
