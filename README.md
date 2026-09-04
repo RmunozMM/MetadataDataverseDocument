@@ -7,7 +7,14 @@ Mermaid y matrices de relaciones en Excel/HTML.
 - **Autor:** Rogelio Muñoz — [www.rogeliomunoz.cl](http://www.rogeliomunoz.cl)
 - **Versión actual:** 2.1.9.0
 - **Plataforma:** .NET Framework 4.8, WinForms
-- **Repositorio privado.** Todos los derechos reservados.
+- **Todos los derechos reservados.** El código está publicado para consulta y para descargar el
+  instalador; no se autoriza su reutilización ni redistribución sin permiso del autor.
+
+## Descargar el instalador
+
+La versión compilada y lista para usar está en la pestaña
+**[Releases](../../releases)** de este repositorio. Descargue el `.zip` de la última versión,
+extráigalo y ejecute `Instalar-Plugin.bat` **con XrmToolBox cerrado**.
 
 ---
 
