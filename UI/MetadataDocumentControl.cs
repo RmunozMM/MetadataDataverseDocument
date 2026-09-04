@@ -148,20 +148,31 @@ namespace MetadataDataverseDocument.UI
         {
             if (pnlQuickFilters == null) return;
 
+            // Los cuatro filtros tienen que caber en UNA fila dentro de los 300 px del panel
+            // izquierdo. pnlQuickFilters es un FlowLayoutPanel de altura fija (28 px): si el
+            // ultimo boton no cabe, se envuelve a una segunda fila y queda recortado, invisible.
+            // Se reajustan los tres del designer y se dimensiona el nuevo para que la suma
+            // (44+62+70+72 = 248, mas ~24 de margenes) entre con holgura en los 288 px utiles.
+            btnFilterAll.Width = 44;
+            btnFilterCustom.Width = 62;
+            btnFilterStandard.Width = 70;
+
             _btnFilterSelected = new Button
             {
                 Text = "Selected",
-                Width = 80,
+                Width = 72,
                 Height = 24,
                 Font = FilterFontInactive
             };
             _btnFilterSelected.Click += (s, ev) => ApplyQuickFilter(QuickFilterMode.Selected);
             pnlQuickFilters.Controls.Add(_btnFilterSelected);
 
+            // El panel izquierdo mide 300 px (SplitterDistance en el .designer), asi que la
+            // etiqueta tiene que caber en ese ancho: un texto largo se recorta y ademas
+            // desordena el layout. La explicacion del multi-termino va en el tooltip.
             if (labelSearchTable != null)
             {
-                labelSearchTable.Text = "Buscar tabla(s) - varios terminos separados por espacio o coma:";
-                labelSearchTable.AutoSize = false;
+                labelSearchTable.Text = "Buscar tabla(s):";
             }
 
             // Ayuda visible al pasar el mouse, para que el flujo "pegar lista -> Select All" se
@@ -1430,7 +1441,7 @@ namespace MetadataDataverseDocument.UI
 
                 var lblVersion = new WinLabel
                 {
-                    Text = "Version 2.1.11.0 | Atributos validos",
+                    Text = "Version 2.1.12.0 | Ajuste de layout",
                     Font = new Font("Segoe UI", 9F),
                     ForeColor = Color.FromArgb(148, 163, 184),
                     AutoSize = true,

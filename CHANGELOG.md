@@ -3,6 +3,22 @@
 Todas las versiones desde la 2.1.0. Las causas raíz están anotadas porque varias fueron
 difíciles de encontrar y conviene no volver a investigarlas.
 
+## 2.1.12.0 — Ajuste de layout del panel izquierdo
+
+- Corregido: al agregar el filtro **"Selected"** en la 2.1.9, los cuatro botones de filtro
+  rápido sumaban 290 px de ancho más márgenes, y el panel izquierdo mide 300 px fijos
+  (`SplitterDistance` en el `.designer`). El cuarto botón no cabía, se envolvía a una segunda
+  fila y, como `pnlQuickFilters` tiene altura fija de 28 px, quedaba recortado e invisible.
+  Ahora los cuatro se dimensionan para caber en una sola fila: 44+62+70+72 = 248 px más ~24 de
+  márgenes, dentro de los 288 px útiles.
+- Corregido: la etiqueta del buscador se había cambiado a un texto que no cabe en 300 px y se
+  recortaba. Vuelve a "Buscar tabla(s):"; la explicación del multi-término permanece en el
+  tooltip del cuadro de búsqueda.
+
+> Nota de layout: cualquier control que se agregue al panel izquierdo debe caber en **288 px**
+> útiles (300 de `SplitterDistance` menos 12 de padding). `pnlQuickFilters` es un
+> `FlowLayoutPanel` de altura fija, así que lo que no cabe no se ve.
+
 ## 2.1.11.0 — Atributos válidos (corrige el error al arrancar)
 
 Corrige el `CustomAttributeFormatException` ("Formato binario del atributo personal
