@@ -1,0 +1,27 @@
+# Normaliza fin de linea: en el repositorio siempre LF, en el disco de Windows
+# CRLF. Sin esto, un archivo tocado desde otra herramienta aparece como
+# "todo el archivo modificado" en el diff.
+* text=auto
+
+# Codigo y proyecto: texto, con CRLF en el checkout de Windows (Visual Studio
+# los espera asi).
+*.cs        text eol=crlf diff=csharp
+*.csproj    text eol=crlf
+*.sln       text eol=crlf
+*.config    text eol=crlf
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.txt       text eol=crlf
+*.md        text eol=crlf
+*.xml       text eol=crlf
+*.json      text eol=crlf
+
+# Binarios: nunca convertir ni intentar diff.
+*.dll       binary
+*.exe       binary
+*.pdb       binary
+*.zip       binary
+*.png       binary
+*.ico       binary
+*.jpg       binary
+*.xlsx      binary

@@ -1,0 +1,50 @@
+# ---------------------------------------------------------------------------
+# Salida de compilacion. NOTA: las DLLs de terceros necesarias para COMPILAR
+# viven en lib/ (versionada), no aqui. Antes las referencias del .csproj
+# apuntaban a bin\Release, que es la propia carpeta de salida del build: eso
+# hacia imposible ignorar bin/ sin romper la compilacion de un clon nuevo.
+# ---------------------------------------------------------------------------
+bin/
+obj/
+
+# Instaladores compilados: se publican como GitHub Releases, no se versionan.
+dist/*.zip
+dist/*.dll
+
+# Artefactos de compilacion manual (respuestas de compilador, logs)
+work/
+*.rsp
+*.log
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userprefs
+*.cache
+*.docstates
+*.VisualState.xml
+*.pdb
+*.ilk
+*.tlog
+
+# ReSharper / Rider
+_ReSharper*/
+*.DotSettings.user
+.idea/
+
+# NuGet
+packages/
+*.nupkg
+
+# Windows / macOS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# Temporales
+*.tmp
+*.bak
+*~
