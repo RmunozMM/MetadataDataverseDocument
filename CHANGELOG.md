@@ -3,6 +3,26 @@
 Todas las versiones desde la 2.1.0. Las causas raíz están anotadas porque varias fueron
 difíciles de encontrar y conviene no volver a investigarlas.
 
+## 2.1.11.0 — Atributos válidos (corrige el error al arrancar)
+
+Corrige el `CustomAttributeFormatException` ("Formato binario del atributo personal
+especificado no válido") que impedía que XrmToolBox cargara **ningún** plugin.
+
+- **Causa raíz:** `ExportMetadata("BigImageBase64", ...)` llevaba un string de 16.774
+  caracteres. El formato de longitud comprimida de los blobs de atributos admite hasta 16.383
+  en su forma de 2 bytes; más allá exige 4 bytes. El compilador usado para las versiones 2.1.1
+  a 2.1.10 escribió 2 bytes con un valor truncado (`0x84 0x41`, que .NET lee como 1089), y el
+  blob quedó inconsistente. La excepción salta durante la composición MEF del arranque, así que
+  tumbaba la carga de todos los plugins instalados.
+- **Solución:** el PNG del icono grande se recomprimió — mismos 80x80 píxeles, cero píxeles
+  alterados, solo mejor compresión — y su base64 bajó de 16.772 a 14.236 caracteres.
+- Nota de advertencia en el código junto al atributo, y validador nuevo
+  `tools/verify_attr_blobs.py` que revisa los blobs del DLL compilado y devuelve código 1 si
+  alguno queda mal codificado. El mismo validador marcaba la 2.1.10 como inválida y da OK en
+  esta versión.
+- Las versiones 2.1.1 a 2.1.10 arrastraban este defecto: cualquiera de ellas podía impedir el
+  arranque de XrmToolBox.
+
 ## 2.1.10.0 — Aislamiento de dependencias
 
 Corrige que este plugin provocara fallos en **otros** plugins de XrmToolBox.

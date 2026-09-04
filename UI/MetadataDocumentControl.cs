@@ -1430,7 +1430,7 @@ namespace MetadataDataverseDocument.UI
 
                 var lblVersion = new WinLabel
                 {
-                    Text = "Version 2.1.10.0 | Aislamiento de dependencias",
+                    Text = "Version 2.1.11.0 | Atributos validos",
                     Font = new Font("Segoe UI", 9F),
                     ForeColor = Color.FromArgb(148, 163, 184),
                     AutoSize = true,

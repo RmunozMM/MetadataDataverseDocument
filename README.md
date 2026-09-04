@@ -5,7 +5,7 @@ Microsoft Dataverse / Dynamics 365: diccionario de datos técnico en Excel, diag
 Mermaid y matrices de relaciones en Excel/HTML.
 
 - **Autor:** Rogelio Muñoz — [www.rogeliomunoz.cl](http://www.rogeliomunoz.cl)
-- **Versión actual:** 2.1.10.0
+- **Versión actual:** 2.1.11.0
 - **Plataforma:** .NET Framework 4.8, WinForms
 - **Todos los derechos reservados.** El código está publicado para consulta y para descargar el
   instalador; no se autoriza su reutilización ni redistribución sin permiso del autor.
@@ -100,7 +100,7 @@ Resources/                        Iconos del plugin
 
 ## Trampas ya pagadas (leer antes de tocar el exportador)
 
-Cinco defectos reales que costaron varias versiones de encontrar. Están documentados aquí para
+Seis defectos reales que costaron varias versiones de encontrar. Están documentados aquí para
 no repetirlos.
 
 **1. `worker.ReportProgress` lanza excepción si el `WorkAsyncInfo` no declara `ProgressChanged`.**
@@ -144,6 +144,25 @@ PowerShell dentro de un literal de C# —, así que buscaba un archivo llamado l
 `$argName.dll` y nunca encontraba nada. Para compensar, el instalador copiaba las dependencias a
 la **raíz** de `Plugins`, que es exactamente lo que las vuelve visibles para todos los plugins.
 Los dos defectos se sostenían mutuamente.
+
+**6. Un string de más de 16.383 caracteres en un atributo rompe el arranque de XrmToolBox
+completo — y el compilador no avisa.**
+`ExportMetadata("BigImageBase64", ...)` llevaba un base64 de 16.774 caracteres. El formato de
+longitud comprimida de los blobs de atributos (ECMA-335 II.23.2) admite hasta `0x3FFF` = 16.383
+en su forma de 2 bytes; más allá exige la de 4 bytes. El compilador de Mono (`mcs`) siguió
+usando 2 bytes con un valor truncado, y .NET Framework lanzó
+`CustomAttributeFormatException` al leerlo. Como esa lectura ocurre en la composición MEF del
+arranque (`CompositionServices.TryExportMetadataForMember` → `PluginManagerExtended.LoadParts`),
+**no cargaba ningún plugin de XrmToolBox**, dando toda la impresión de que este plugin rompía a
+los demás.
+
+Reglas para no repetirlo:
+- Ningún string dentro de un atributo debe pasar de 16.383 caracteres. Los iconos embebidos en
+  base64 son el caso típico: manténgalos comprimidos.
+- Después de compilar, correr `python3 tools/verify_attr_blobs.py bin\Release\MetadataDataverseDocument.dll`.
+  Devuelve código 1 si algún blob quedó mal codificado.
+- Compilar con MSBuild / Visual Studio en Windows evita este bug puntual del compilador, pero el
+  límite del formato existe igual: el validador sirve en ambos casos.
 
 ---
 
